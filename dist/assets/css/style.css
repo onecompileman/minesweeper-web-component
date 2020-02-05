@@ -1,0 +1,17 @@
+body {
+  min-height: 100vh;
+  background-color: #2f343a;
+  margin: 0;
+}
+
+main {
+  width: 100%;
+  height: 100vh;
+}
+
+game-manager {
+  width: 100%;
+  height: calc(100vh - 50px);
+  display: flex;
+  justify-content: center;
+}
