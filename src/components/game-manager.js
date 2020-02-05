@@ -12,7 +12,8 @@ const componentStyle = `
         padding: 10px;
     }
 
-    .play-button {
+    .play-button,
+    .pause-button {
         background-color: #4A8AF4;
         color: #ffffff;
         cursor: pointer;
@@ -20,6 +21,11 @@ const componentStyle = `
         padding: 8px 10px;
         width: 100px;
         text-align: center;
+    }
+
+    .pause-button {
+      background-color: #DD5347;
+      display: none;
     }
 
     .game-header {
@@ -60,10 +66,10 @@ export class GameManager extends HTMLElement {
     this.init();
     this.updateDOM();
     setTimeout(() => {
-      this.initTiles();
+      this.initButtons();
       this.initGame();
     });
-    Swal.fire('Welcome', 'Start game', 'success');
+    Swal.fire('Welcome', 'Created by Stephen Vinuya', 'success');
   }
 
   init() {
@@ -71,6 +77,7 @@ export class GameManager extends HTMLElement {
     this.prop = {
       time: 0,
       timeInterval: null,
+      isPlaying: false,
       tilesEl: []
     };
   }
@@ -79,19 +86,11 @@ export class GameManager extends HTMLElement {
     const tiles = Array(16)
       .fill(0)
       .map(arr => [...Array(16).fill(0)]);
-    const takenCells = [];
-    const numberOfBombs = 40;
-    for (let i = 0; i < 40; i++) {
-      let r;
-      let c;
-      do {
-        r = Math.floor(Math.random() * 16);
-        c = Math.floor(Math.random() * 16);
-      } while (takenCells.includes(`${r}-${c}`));
-      takenCells.push(`${r}-${c}`);
-      tiles[r][c] = '*';
-    }
 
+    return this.countTilesBomb(this.addBombToTiles(tiles));
+  }
+
+  countTilesBomb(tiles) {
     for (let r = 0; r < 16; r++) {
       for (let c = 0; c < 16; c++) {
         if (tiles[r][c] === 0) {
@@ -112,10 +111,29 @@ export class GameManager extends HTMLElement {
     return tiles;
   }
 
+  addBombToTiles(tiles) {
+    const takenCells = [];
+    const numberOfBombs = 40;
+
+    for (let i = 0; i < numberOfBombs; i++) {
+      let r;
+      let c;
+      do {
+        r = Math.floor(Math.random() * 16);
+        c = Math.floor(Math.random() * 16);
+      } while (takenCells.includes(`${r}-${c}`));
+      takenCells.push(`${r}-${c}`);
+      tiles[r][c] = '*';
+    }
+    return tiles;
+  }
+
   initTiles() {
     const tileMargin = 3;
     const tileValues = this.generateTilesContentAndBombs();
     this.tileContainerEl = this.root.querySelector('.tile-container');
+    this.tileContainerEl.innerHTML = '';
+    this.prop.tilesEl = [];
     const tileW = this.tileContainerEl.offsetWidth / 16;
     const tileH = this.tileContainerEl.offsetHeight / 16;
     for (let r = 0; r < 16; r++) {
@@ -126,7 +144,9 @@ export class GameManager extends HTMLElement {
         tileEl.style.height = `${tileH - tileMargin * 2}px`;
         tileEl.value = tileValues[r][c];
         tileEl.addEventListener('click', () => {
-          this.openTile(r, c);
+          if (this.prop.isPlaying) {
+            this.openTile(r, c);
+          }
         });
         tilesRow.push(tileEl);
         this.tileContainerEl.appendChild(tileEl);
@@ -135,21 +155,70 @@ export class GameManager extends HTMLElement {
     }
   }
 
+  initButtons() {
+    this.playBtnEl = this.root.querySelector('#playButton');
+    this.pauseBtnEl = this.root.querySelector('#pauseButton');
+
+    this.playBtnEl.addEventListener('click', () => {
+      this.play();
+    });
+
+    this.pauseBtnEl.addEventListener('click', () => {
+      this.pause();
+    });
+  }
+
+  pause() {
+    this.prop.isPlaying = false;
+    this.playBtnEl.style.display = 'block';
+    this.pauseBtnEl.style.display = 'none';
+  }
+
+  play() {
+    this.prop.isPlaying = true;
+    this.playBtnEl.style.display = 'none';
+    this.pauseBtnEl.style.display = 'block';
+  }
+
   openTile(r, c) {
     const tile = this.prop.tilesEl[r][c];
     if (tile.value === '*') {
       tile.revealed = true;
       setTimeout(() => {
-        Swal.fire('Game over', 'Restart the game', 'error');
-      }, 1000);
+        this.gameOver();
+      }, 500);
     } else {
       this.recursiveOpenTiles(r, c);
+      this.checkWin();
+    }
+  }
+
+  gameOver() {
+    Swal.fire('Game over', 'Restart the game', 'error');
+    this.resetGame();
+  }
+
+  resetGame() {
+    this.prop.isPlaying = false;
+    this.prop.time = 0;
+    this.root.querySelector('#timeText').innerHTML = this.prop.time;
+    this.initGame();
+  }
+
+  checkWin() {
+    const tilesWithoutBomb = this.prop.tilesEl
+      .reduce((acc, tilesRow) => [...acc, ...tilesRow], [])
+      .filter(tile => tile.value !== '*');
+
+    const isAllTilesOpen = tilesWithoutBomb.every(tiles => tiles.revealed);
+    if (isAllTilesOpen) {
+      Swal('Game over', 'You win the game!', 'success');
+      this.resetGame();
     }
   }
 
   recursiveOpenTiles(r, c) {
     const tile = this.prop.tilesEl[r][c];
-    console.log(tile.value);
     if (tile.revealed) {
       return;
     }
@@ -169,9 +238,18 @@ export class GameManager extends HTMLElement {
   }
 
   initGame() {
+    this.initTimeInterval();
+    this.initTiles();
+    this.pause();
+  }
+
+  initTimeInterval() {
+    clearInterval(this.prop.timeInterval);
     this.prop.timeInterval = setInterval(() => {
-      this.prop.time++;
-      this.root.querySelector('#timeText').innerHTML = this.prop.time;
+      if (this.prop.isPlaying) {
+        this.prop.time++;
+        this.root.querySelector('#timeText').innerHTML = this.prop.time;
+      }
     }, 1000);
   }
 
@@ -186,9 +264,10 @@ export class GameManager extends HTMLElement {
                 </div>
                 <div class="time">
                     <img src="/assets/images/bomb.png" height="40">
-                    <span class="time-text">100</span>
+                    <span class="time-text">40</span>
                 </div>
                 <div id="playButton" class="play-button">Play</div>
+                <div id="pauseButton" class="pause-button">Pause</div>
             </div>
             <div class="tile-container">
               
