@@ -14,3 +14,4 @@ Sample of using web components by a Minesweeper Game
 ```npm run serve```
 
 **Build for deployment**
+```npm run build```
