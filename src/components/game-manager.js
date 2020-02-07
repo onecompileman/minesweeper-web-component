@@ -186,7 +186,7 @@ export class GameManager extends HTMLElement {
       tile.revealed = true;
       setTimeout(() => {
         this.gameOver();
-      }, 500);
+      }, 1000);
     } else {
       this.recursiveOpenTiles(r, c);
       this.checkWin();
