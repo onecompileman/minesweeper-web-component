@@ -1,5 +1,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const { GenerateSW, InjectManifest } = require('workbox-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   entry: './src/index.js',
@@ -25,7 +27,15 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: './src/index.html'
-    })
+    }),
+    new GenerateSW(),
+    new InjectManifest({
+      swSrc: './src-sw.js'
+    }),
+    new CopyPlugin([
+      { from: './src/manifest.json', to: './manifest.json' },
+      { from: './src/assets', to: 'assets' }
+    ])
   ],
   devServer: {
     contentBase: path.join(__dirname, 'dist'),

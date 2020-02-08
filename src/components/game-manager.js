@@ -9,7 +9,7 @@ const componentStyle = `
         max-width: 700px;
         height: 100%;
         align-items: center;
-        padding: 10px;
+        padding: 3px;
     }
 
     .play-button,
@@ -55,7 +55,7 @@ const componentStyle = `
     }
 
     tile-mine {
-      margin: 3px;
+      margin: 1px;
     }
     </style>
 `;
@@ -69,7 +69,14 @@ export class GameManager extends HTMLElement {
       this.initButtons();
       this.initGame();
     });
-    Swal.fire('Welcome', 'Created by Stephen Vinuya', 'success');
+    Swal.fire({
+      title: 'Welcome',
+      html: 'Created by Stephen Vinuya',
+      icon: 'success',
+      onClose: () => {
+        this.play();
+      }
+    });
   }
 
   init() {
@@ -83,22 +90,22 @@ export class GameManager extends HTMLElement {
   }
 
   generateTilesContentAndBombs() {
-    const tiles = Array(16)
+    const tiles = Array(10)
       .fill(0)
-      .map(arr => [...Array(16).fill(0)]);
+      .map(arr => [...Array(10).fill(0)]);
 
     return this.countTilesBomb(this.addBombToTiles(tiles));
   }
 
   countTilesBomb(tiles) {
-    for (let r = 0; r < 16; r++) {
-      for (let c = 0; c < 16; c++) {
+    for (let r = 0; r < 10; r++) {
+      for (let c = 0; c < 10; c++) {
         if (tiles[r][c] === 0) {
           let bombCount = 0;
           const minR = r === 0 ? 0 : r - 1;
-          const maxR = r === 15 ? 15 : r + 1;
+          const maxR = r === 9 ? 9 : r + 1;
           const minC = c === 0 ? 0 : c - 1;
-          const maxC = c === 15 ? 15 : c + 1;
+          const maxC = c === 9 ? 9 : c + 1;
           for (let ir = minR; ir <= maxR; ir++) {
             for (let ic = minC; ic <= maxC; ic++) {
               bombCount += +(tiles[ir][ic] === '*');
@@ -113,14 +120,14 @@ export class GameManager extends HTMLElement {
 
   addBombToTiles(tiles) {
     const takenCells = [];
-    const numberOfBombs = 40;
+    const numberOfBombs = 15;
 
     for (let i = 0; i < numberOfBombs; i++) {
       let r;
       let c;
       do {
-        r = Math.floor(Math.random() * 16);
-        c = Math.floor(Math.random() * 16);
+        r = Math.floor(Math.random() * 10);
+        c = Math.floor(Math.random() * 10);
       } while (takenCells.includes(`${r}-${c}`));
       takenCells.push(`${r}-${c}`);
       tiles[r][c] = '*';
@@ -129,16 +136,16 @@ export class GameManager extends HTMLElement {
   }
 
   initTiles() {
-    const tileMargin = 3;
+    const tileMargin = 1;
     const tileValues = this.generateTilesContentAndBombs();
     this.tileContainerEl = this.root.querySelector('.tile-container');
     this.tileContainerEl.innerHTML = '';
     this.prop.tilesEl = [];
-    const tileW = this.tileContainerEl.offsetWidth / 16;
-    const tileH = this.tileContainerEl.offsetHeight / 16;
-    for (let r = 0; r < 16; r++) {
+    const tileW = this.tileContainerEl.offsetWidth / 10;
+    const tileH = this.tileContainerEl.offsetHeight / 10;
+    for (let r = 0; r < 10; r++) {
       const tilesRow = [];
-      for (let c = 0; c < 16; c++) {
+      for (let c = 0; c < 10; c++) {
         const tileEl = document.createElement('tile-mine');
         tileEl.style.width = `${tileW - tileMargin * 2}px`;
         tileEl.style.height = `${tileH - tileMargin * 2}px`;
@@ -184,6 +191,7 @@ export class GameManager extends HTMLElement {
     const tile = this.prop.tilesEl[r][c];
     if (tile.value === '*') {
       tile.revealed = true;
+      this.prop.isPlaying = false;
       setTimeout(() => {
         this.gameOver();
       }, 1000);
@@ -230,11 +238,11 @@ export class GameManager extends HTMLElement {
     // up
     if (r > 0) this.recursiveOpenTiles(r - 1, c);
     // Down
-    if (r < 15) this.recursiveOpenTiles(r + 1, c);
+    if (r < 9) this.recursiveOpenTiles(r + 1, c);
     // left
     if (c > 0) this.recursiveOpenTiles(r, c - 1);
     // Down
-    if (c < 15) this.recursiveOpenTiles(r, c + 1);
+    if (c < 9) this.recursiveOpenTiles(r, c + 1);
   }
 
   initGame() {
@@ -259,12 +267,12 @@ export class GameManager extends HTMLElement {
         <div class="game-manager">
             <div class="game-header">
                 <div class="time">
-                    <img src="/assets/images/time.png" height="40">
+                    <img src="./assets/images/time.png" height="40">
                     <span id="timeText" class="time-text"></span>
                 </div>
                 <div class="time">
-                    <img src="/assets/images/bomb.png" height="40">
-                    <span class="time-text">40</span>
+                    <img src="./assets/images/bomb.png" height="40">
+                    <span class="time-text">15</span>
                 </div>
                 <div id="playButton" class="play-button">Play</div>
                 <div id="pauseButton" class="pause-button">Pause</div>

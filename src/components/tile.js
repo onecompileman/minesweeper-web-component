@@ -72,7 +72,7 @@ export class Tile extends HTMLElement {
       '#DD5347'
     ];
     if (value === '*') {
-      return `<img src="/assets/images/bomb.png" height="20">`;
+      return `<img src="./assets/images/bomb.png" height="20">`;
     } else if (+value > 0) {
       return `<span style="color: ${numberColors[+value - 1]};">${value}<span>`;
     }
