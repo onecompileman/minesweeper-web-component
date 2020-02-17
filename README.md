@@ -4,6 +4,7 @@
 
 Sample of using web components by a Minesweeper Game
 
+Demo: [click here](https://onecompileman.com/minesweeper-web-component/)
 
 **Get started** 
 
